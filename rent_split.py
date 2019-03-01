@@ -18,21 +18,15 @@ def find_utilitarian_assignment(bids):
 
 def generate_assessment_matrix(bids, assignment):
     num_participants = len(bids)
-
-    assessment_matrix = create_empty_matrix(num_participants)
+    assessment_matrix = []
 
     for i in range(num_participants):
+        assessment_row = []
         for j in range(num_participants):
-            assessment_matrix[i][j] = compute_assessment(i, j, bids, assignment)
+            assessment_row.append(compute_assessment(i, j, bids, assignment))
+        assessment_matrix.append(assessment_row)
 
     return assessment_matrix
-
-
-def create_empty_matrix(num_participants):
-    matrix = []
-    for i in range(num_participants):
-        matrix.append(num_participants * [0])
-    return matrix
 
 
 def compute_assessment(i, j, bids, assignment):
@@ -88,30 +82,15 @@ def check_bids(num_participants, bids, cost):
         assert sum(bids[i]) == cost
 
 
-if __name__ == '__main__':
-    # cost = 100
-    # bids = [[50, 20, 10, 20],
-    #         [60, 40, 15, 10],
-    #         [0, 40, 25, 35],
-    #         [50, 35, 10, 30]]
-
-    cost = 3700
-    bids = [[928, 728, 730, 718, 0, 0, 596],  #way
-            #[812, 628, 628, 628, 152, 203, 649], #elaine
-            [743, 620, 620, 620, 225, 285, 587],  # elaine
-            [824, 676, 677, 677, 0, 0, 846],  #tollers
-            [742, 661, 662, 662, 199, 199, 575],  #kopas
-            [763, 679, 680, 680, 0, 308, 590],  #jeannie
-            [728, 657, 658, 658, 174, 263, 562],  #finleys
-            [681, 586, 586, 587, 362, 408, 490]] # almna
-
+def split_rent(cost, bids):
     num_participants = len(bids)
+
     check_bids(num_participants, bids, cost)
     total_discounts = num_participants * [0]
 
-    utilitarian_assignment, max_sum = find_utilitarian_assignment(bids)
+    assignment, max_sum = find_utilitarian_assignment(bids)
     surplus = max_sum - cost
-    assessment_matrix = generate_assessment_matrix(bids, utilitarian_assignment)
+    assessment_matrix = generate_assessment_matrix(bids, assignment)
     max_envy = get_max_envy(assessment_matrix)
 
     while not is_envyless(max_envy):
@@ -126,6 +105,27 @@ if __name__ == '__main__':
 
     final_cost = []
     for i in range(num_participants):
-        final_cost.append(bids[i][utilitarian_assignment[i]] - total_discounts[i])
+        final_cost.append(bids[i][assignment[i]] - total_discounts[i])
 
-    pass
+    return assignment, final_cost
+
+
+def print_results(assignment, final_costs, participants, rooms):
+    for i in range(len(assignment)):
+        print '{:<10}| {:<15}| ${:<5}'.format(participants[i], rooms[assignment[i]], final_costs[i])
+
+if __name__ == '__main__':
+    cost = 3700
+    bids = [[928, 728, 730, 718, 0, 0, 596],  #way
+            [743, 625, 620, 615, 225, 285, 587],  # elaine
+            [824, 676, 677, 677, 0, 0, 846],  #tollers
+            [742, 661, 662, 662, 199, 199, 575],  #kopas
+            [763, 679, 680, 680, 0, 308, 590],  #jeannie
+            [728, 657, 658, 658, 174, 263, 562],  #finleys
+            [681, 586, 586, 587, 362, 408, 490]] # almna
+
+    participants = ['Ni', 'Nash', 'Toller', 'Kopa', 'Zuehlke', 'Finley', 'Alma']
+    rooms = ['Honeymoon', 'King1', 'King2', 'King3', 'French tub', 'French shower', 'Queen + twin']
+
+    assignment, final_costs = split_rent(cost, bids)
+    print_results(assignment, final_costs, participants, rooms)
